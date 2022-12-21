@@ -42,14 +42,17 @@ mutatePayload: if true, the sign function will modify the payload object directl
 */
 
 class checkJWT {
+  algorithm = "";
   privateKey = "";
   publicKey = "";
-  secret = "secret";
   options = {};
-  constructor(privateKey, publicKey, options) {
+  isRSA = false;
+  constructor(options, privateKey, publicKey) {
     this.options = options; //algorithm + keyid + noTimestamp + expiresIn + notBefore
-    this.privateKey = !isNull(privateKey) && privateKey;
-    this.publicKey = !isNull(publicKey) && publicKey;
+    this.algorithm = this.options?.algorithm;
+    this.isRSA = this.algorithm.startsWith("RS");
+    this.privateKey = privateKey;
+    this.publicKey = this.isRSA && !isNull(publicKey) && publicKey;
   }
 
   sign(payload, signOptions) {
@@ -79,8 +82,13 @@ class checkJWT {
   }
 
   verify(token, verifyOptions) {
+    const secretKey = this.isRSA ? this.publicKey : this.privateKey;
+    if (!secretKey) {
+      console.error("secretKey is null");
+      return false;
+    }
     return new Promise((resolve, reject) => {
-      JWT.verify(token, this.publicKey, verifyOptions, function (err, decoded) {
+      JWT.verify(token, secretKey, verifyOptions, function (err, decoded) {
         const result = {
           vaild: "",
           message: "",
@@ -111,8 +119,7 @@ const signOptions = { audience: "myaud", issuer: "myissuer", jwtid: "1", subject
 
 var publicKeyPEM = fs.readFileSync("./public.key");
 var privateKeyPEM = fs.readFileSync("./private.key");
-// console.log(privateKeyPEM);
-const RSAGenerator = new checkJWT(privateKeyPEM, publicKeyPEM, JWTOptions);
+const RSAGenerator = new checkJWT(JWTOptions, privateKeyPEM, publicKeyPEM);
 
 let token = "";
 async function main() {
