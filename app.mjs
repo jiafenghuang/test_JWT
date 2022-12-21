@@ -55,7 +55,7 @@ class checkJWT {
   sign(payload, signOptions) {
     const jwtSignOptions = Object.assign({}, this.options, signOptions);
     return new Promise((resolve, reject) => {
-      JWT.sign(assignJWTKeys(payload, signOptions), this.publicKey, jwtSignOptions, function (err, token) {
+      JWT.sign(assignJWTKeys(payload, signOptions), this.privateKey, jwtSignOptions, function (err, token) {
         console.log("err", err);
         console.log("token", token);
         if (err) {
@@ -111,6 +111,7 @@ const signOptions = { audience: "myaud", issuer: "myissuer", jwtid: "1", subject
 
 var publicKeyPEM = fs.readFileSync("./public.key");
 var privateKeyPEM = fs.readFileSync("./private.key");
+// console.log(privateKeyPEM);
 const RSAGenerator = new checkJWT(privateKeyPEM, publicKeyPEM, JWTOptions);
 
 let token = "";
@@ -119,10 +120,10 @@ async function main() {
 }
 main();
 
-// setTimeout(async () => {
-//   try {
-//     console.log(await RSAGenerator.verify(token, { audience: "myaud" }));
-//   } catch (err) {
-//     console.log(err);
-//   }
-// }, 5000);
+setTimeout(async () => {
+  try {
+    console.log(await RSAGenerator.verify(token, { audience: "myaud" }));
+  } catch (err) {
+    console.log(err);
+  }
+}, 5000);
